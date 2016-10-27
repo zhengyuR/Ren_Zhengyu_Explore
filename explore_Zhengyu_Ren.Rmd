@@ -1,0 +1,58 @@
+---
+title: "HW"
+author: "Zhengyu Ren"
+date: "2016/10/27"
+output: html_document
+---
+
+```
+```
+```{r}
+require(ggplot2)
+data("diamonds")
+explore <- function(data,switch = "on",threshold = 0,vector = "ggplot"){
+  
+  non_num <- data[!sapply(data,is.numeric)] #take out non numeric variables
+  nonnum_table <- c() #create a new empty table
+  for(i in 1:length(non_num)){
+    temp <- table(non_num[i]) 
+    nonnum_table <- c(nonnum_table,temp) #count variables' table  
+  }
+  
+  num <- Filter(is.numeric,data)#filter the data and get the numeric columns
+  summary_table <- summary(num)
+  
+  colna <- colnames(num)
+  com_num <- combn(colna, 2)
+  VP <- c()#create a empty vector for "Variable Pairs"
+  R2 <- c()#create a empty vector for "R-Square
+  for(i in 1:ncol(com_num)){
+    temp1 <- paste(com_num[1,i],com_num[2,i],sep = '-')#add pairnames to the empty VP we set up before by the function 'paste' and also seperate it by'-'
+    VP <- c(VP,temp1)
+    model <- lm(num[,com_num[1,i]]~1+num[,com_num[2,i]])
+    temp2 <- summary(model)$r.squared#add the summary table to the RR we set up before and use '$r.squared' to call rsquare value
+    R2 <- c(R2,as.numeric(temp2))
+  }
+  RR <- data.frame(VP,R2)#organize the two vectors as a dataframe
+  colnames(RR) <- c("Variable Pairs","R-square")#add column name
+  
+  VP2 <- c()
+  Cor <- c()
+  for(i in 1:ncol(com_num)){
+    temp1 <- paste(com_num[1,i],com_num[2,i],sep = '-')#using function 'paste' to add the column names and seperate it by'-'
+    corr <- cor(num[,com_num[1,i]],num[,com_num[2,i]],method = "pearson")#using function 'cor' to figure out the pearson correlation by 'method="pearson"'
+    if(corr >= threshold){
+      VP2 <- c(VP2,temp1)
+      Cor <- c(Cor,corr)#pick up the value in the in the lower triangular matrix
+    }
+  }
+  CRR <- data.frame(VP2,Cor)#organize the two vectors as a dataframe
+  colnames(CRR) <- c("Variable Pairs","Pearson Exceeds Threshold")#add column name
+  
+  out <- list(nonnum_table,summary_table,RR,CRR)
+  return(out)
+}
+explore(diamonds)#test the data frame"diamonds"
+```
+
+
