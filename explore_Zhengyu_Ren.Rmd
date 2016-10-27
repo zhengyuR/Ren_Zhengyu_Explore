@@ -1,58 +1,85 @@
 ---
-title: "HW"
+title: "Ren_Zhengyu_HW7"
 author: "Zhengyu Ren"
 date: "2016/10/27"
 output: html_document
 ---
 
-```
-```
 ```{r}
 require(ggplot2)
 data("diamonds")
-explore <- function(data,switch = "on",threshold = 0,vector = "ggplot"){
-  
-  non_num <- data[!sapply(data,is.numeric)] #take out non numeric variables
-  nonnum_table <- c() #create a new empty table
-  for(i in 1:length(non_num)){
-    temp <- table(non_num[i]) 
-    nonnum_table <- c(nonnum_table,temp) #count variables' table  
-  }
-  
-  num <- Filter(is.numeric,data)#filter the data and get the numeric columns
-  summary_table <- summary(num)
-  
-  colna <- colnames(num)
+#1
+frequencytable<-function(data){
+#define a samll function for the frequency table of every categorical and	logical variable
+#parameter:dataframe we input
+#return:the frequency table of factor and logical columns
+  CandL<-c(data[sapply(data,is.factor)],data[sapply(data,is.logical)])
+  return(lapply(CandL,table))
+}
+#define a new vector 'CandL' which only contains factor and logical columns in the data frame by using function 'sapply' to go over all columns in the dataframe. Then use function 'table' to get the frequency table
+
+#2a
+summarystatisticstable<- function(data){
+#define a samll function for the summary statistics table for each numerical variable
+#parameter:dataframe we input
+#return:summary statistics table for numerical columns
+  NV<-Filter(is.numeric,data)
+  return(summary(NV))
+}
+#define a new variable which only pick up the numerical columns in the dataset by using sapply to go through the whole dataframe. Then use function 'summary' to get the summary table.
+
+#2b
+RSquared<-function(data){
+#define a samll function for a data frame that contains each pair	of column names in the	first	column and the associated r-square value in the second column
+#parameter:dataframe we input
+#return:a new data frame cotains "Variable Pairs" and "R-Square" columns
+  data<-Filter(is.numeric,data)#filter the data and get the numeric columns
+  colna <- colnames(data)
   com_num <- combn(colna, 2)
   VP <- c()#create a empty vector for "Variable Pairs"
   R2 <- c()#create a empty vector for "R-Square
   for(i in 1:ncol(com_num)){
     temp1 <- paste(com_num[1,i],com_num[2,i],sep = '-')#add pairnames to the empty VP we set up before by the function 'paste' and also seperate it by'-'
     VP <- c(VP,temp1)
-    model <- lm(num[,com_num[1,i]]~1+num[,com_num[2,i]])
-    temp2 <- summary(model)$r.squared#add the summary table to the RR we set up before and use '$r.squared' to call rsquare value
+    model <- lm(data[,com_num[1,i]]~1+data[,com_num[2,i]])#add the summary table to the pairwiseRSquared we set up before
+    temp2 <- summary(model)$r.squared#use '$r.squared' to call rsquare value
     R2 <- c(R2,as.numeric(temp2))
   }
   RR <- data.frame(VP,R2)#organize the two vectors as a dataframe
   colnames(RR) <- c("Variable Pairs","R-square")#add column name
-  
-  VP2 <- c()
-  Cor <- c()
+  return(RR)
+}
+
+#2c
+#define a samll function for a data frame that contains e	each pair	of	column names	in the	first	column and correlation	coefficient	(Pearson)	for	all	coefficients	whose absolute value is	greater than the correlation threshold in the second column
+#parameter:dataframe we input
+#return:a new data frame cotains "Variable Pairs" and "Pearson Exceeds Threshold"columns
+pearsincorr<-function(data){
+  data<-Filter(is.numeric,data)#filter the data and get the numeric columns
+  colna <- colnames(data)
+  com_num <- combn(colna, 2)
+  VP2 <- c()#create a empty vector for "Variable Pairs"
+  Cor <- c()#create a empty vector for correlation "Pearson Exceeds Threshold"
   for(i in 1:ncol(com_num)){
-    temp1 <- paste(com_num[1,i],com_num[2,i],sep = '-')#using function 'paste' to add the column names and seperate it by'-'
-    corr <- cor(num[,com_num[1,i]],num[,com_num[2,i]],method = "pearson")#using function 'cor' to figure out the pearson correlation by 'method="pearson"'
-    if(corr >= threshold){
+    temp1 <- paste(com_num[1,i],com_num[2,i],sep='-')#using function 'paste' to add the column names and seperate it by'-'
+    corr <- cor(data[,com_num[1,i]],data[,com_num[2,i]],method = "pearson")#using function 'cor' to figure out the pearson correlation by 'method="pearson"'
+    if(corr >= 0){
       VP2 <- c(VP2,temp1)
-      Cor <- c(Cor,corr)#pick up the value in the in the lower triangular matrix
+      Cor <- c(Cor,corr)#pick up the value in the lower triangular matrix
     }
   }
   CRR <- data.frame(VP2,Cor)#organize the two vectors as a dataframe
   colnames(CRR) <- c("Variable Pairs","Pearson Exceeds Threshold")#add column name
-  
-  out <- list(nonnum_table,summary_table,RR,CRR)
+  return(CRR)
+}
+
+
+explore<-function(data){
+#define the mainfunction explore
+#parameter:dataframe we input
+#return:frequency table,summary statistic table, and two new dataframes
+  out<-list(frequencytable(data),summarystatisticstable(data),RSquared(data),pearsincorr(data))
   return(out)
 }
-explore(diamonds)#test the data frame"diamonds"
-```
-
+explore(diamonds)#test of the function'explore'
 
