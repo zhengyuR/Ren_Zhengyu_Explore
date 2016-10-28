@@ -54,7 +54,7 @@ RSquared<-function(data){
 #define a small function for a data frame that contains e	each pair	of	column names	in the	first	column and correlation	coefficient	(Pearson)	for	all	coefficients	whose absolute value is	greater than the correlation threshold in the second column
 #parameter:dataframe we input
 #return:a new data frame cotains "Variable Pairs" and "Pearson Exceeds Threshold"columns
-pearsincorr<-function(data){
+pearsincorr<-function(data,th=0){
   data<-Filter(is.numeric,data)#filter the data and get the numeric columns
   colna <- colnames(data)
   com_num <- combn(colna, 2)
@@ -74,11 +74,11 @@ pearsincorr<-function(data){
 }
 
 
-explore<-function(data,ps="on",th=0,ov="ggplot"){
+explore<-function(data,ps="on",threshold=0,ov="ggplot"){
 #define the mainfunction explore
 #parameter:dataframe we input
 #return:frequency table,summary statistic table, and two new dataframes
-  out<-list(frequencytable(data),summarystatisticstable(data),RSquared(data),pearsincorr(data))
+  out<-list(frequencytable(data),summarystatisticstable(data),RSquared(data),pearsincorr(data,th=threshold))
   return(out)
 }
 explore(diamonds)#test of the function'explore'
