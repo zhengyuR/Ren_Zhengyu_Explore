@@ -63,7 +63,7 @@ pearsincorr<-function(data){
   for(i in 1:ncol(com_num)){
     temp1 <- paste(com_num[1,i],com_num[2,i],sep='-')#using function 'paste' to add the column names and seperate it by'-'
     corr <- cor(data[,com_num[1,i]],data[,com_num[2,i]],method = "pearson")#using function 'cor' to figure out the pearson correlation by 'method="pearson"'
-    if(corr >= 0){
+    if(corr >= th){
       VP2 <- c(VP2,temp1)
       Cor <- c(Cor,corr)#pick up the value in the lower triangular matrix
     }
@@ -74,7 +74,7 @@ pearsincorr<-function(data){
 }
 
 
-explore<-function(data){
+explore<-function(data,ps="on",th=0,ov="ggplot"){
 #define the mainfunction explore
 #parameter:dataframe we input
 #return:frequency table,summary statistic table, and two new dataframes
