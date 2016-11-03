@@ -83,3 +83,6 @@ explore<-function(data,ps="on",threshold=0,ov="ggplot"){
 }
 explore(diamonds)#test of the function'explore'
 
+#3
+
+
