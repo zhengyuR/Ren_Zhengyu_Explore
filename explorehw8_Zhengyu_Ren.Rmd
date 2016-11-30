@@ -1,0 +1,195 @@
+---
+title: "Ren_Zhengyu_HW7+HW8"
+author: "Zhengyu Ren"
+date: "2016/10/27"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(grid)
+data("diamonds")
+#HW7
+#1
+frequencytable<-function(data){
+#define a small function for the frequency table of every categorical and	logical variable
+#parameter:dataframe we input
+#return:the frequency table of factor and logical columns
+  CandL<-c(data[sapply(data,is.factor)],data[sapply(data,is.logical)])
+  return(lapply(CandL,table))
+}
+#define a new vector 'CandL' which only contains factor and logical columns in the data frame by using function 'sapply' to go over all columns in the dataframe. Then use function 'table' to get the frequency table
+
+#2a
+summarystatisticstable<- function(data){
+#define a small function for the summary statistics table for each numerical variable
+#parameter:dataframe we input
+#return:summary statistics table for numerical columns
+  NV<-Filter(is.numeric,data)
+  return(summary(NV))
+}
+#define a new variable which only pick up the numerical columns in the dataset by using sapply to go through the whole dataframe. Then use function 'summary' to get the summary table.
+
+#2b
+RSquared<-function(data){
+#define a small function for a data frame that contains each pair	of column names in the	first	column and the associated r-square value in the second column
+#parameter:dataframe we input
+#return:a new data frame cotains "Variable Pairs" and "R-Square" columns
+  data<-Filter(is.numeric,data)#filter the data and get the numeric columns
+  colna <- colnames(data)
+  com_num <- combn(colna, 2)
+  VP <- c()#create a empty vector for "Variable Pairs"
+  R2 <- c()#create a empty vector for "R-Square
+  for(i in 1:ncol(com_num)){
+    temp1 <- paste(com_num[1,i],com_num[2,i],sep = '-')#add pairnames to the empty VP we set up before by the function 'paste' and also seperate it by'-'
+    VP <- c(VP,temp1)
+    model <- lm(data[,com_num[1,i]]~1+data[,com_num[2,i]])#add the summary table to the pairwiseRSquared we set up before
+    temp2 <- summary(model)$r.squared#use '$r.squared' to call rsquare value
+    R2 <- c(R2,as.numeric(temp2))
+  }
+  RR <- data.frame(VP,R2)#organize the two vectors as a dataframe
+  colnames(RR) <- c("Variable Pairs","R-square")#add column name
+  return(RR)
+}
+
+#2c
+pearsincorr<-function(data,th=0){
+#define a small function for a data frame that contains e	each pair	of	column names	in the	first	column and correlation	coefficient	(Pearson)	for	all	coefficients	whose absolute value is	greater than the correlation threshold in the second column
+#parameter:dataframe we input
+#return:a new data frame cotains "Variable Pairs" and "Pearson Exceeds Threshold"columns
+  data<-Filter(is.numeric,data)#filter the data and get the numeric columns
+  colna <- colnames(data)
+  com_num <- combn(colna, 2)
+  VP2 <- c()#create a empty vector for "Variable Pairs"
+  Cor <- c()#create a empty vector for correlation "Pearson Exceeds Threshold"
+  for(i in 1:ncol(com_num)){
+    temp1 <- paste(com_num[1,i],com_num[2,i],sep='-')#using function 'paste' to add the column names and seperate it by'-'
+    corr <- cor(data[,com_num[1,i]],data[,com_num[2,i]],method = "pearson")#using function 'cor' to figure out the pearson correlation by 'method="pearson"'
+    if(corr >= th){
+      VP2 <- c(VP2,temp1)
+      Cor <- c(Cor,corr)#pick up the value in the lower triangular matrix
+    }
+  }
+  CRR <- data.frame(VP2,Cor)#organize the two vectors as a dataframe
+  colnames(CRR) <- c("Variable Pairs","Pearson Exceeds Threshold")#add column name
+  return(CRR)
+}
+
+#HW8
+#3
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+#define a function to draw multiple graphs in one page.
+
+  plots <- c(list(...), plotlist)#create a new empty list by 'plotlist'
+  numPlots = length(plots)#define a parameter equal to the length of plots for the following layout
+  if (is.null(layout)) {
+    # If layout is NULL, then use 'cols' to determine layout
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),ncol = cols, nrow = ceiling(numPlots/cols))#use function 'ceiling' to returns a numeric vector and use matrix to define the layout
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    grid.newpage()#create a new page
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+      # Plot each in the correct location
+    for (i in 1:numPlots) {
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+        #the position that contain this subplot
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,layout.pos.col = matchidx$col))#use function 'viewport to create a grid viewport
+    }
+  }
+}
+
+
+plot_density_count <- function(data,plotswitch='off',vector=NULL){
+#define a function plot a pair of blue histograms with a vertical red line at the mean (one using counts and the other density) for every numerical variable at each number of bins integer specified in the bin vector parameter.
+#parameter:a dataframe we input
+#returns: histogranms
+  num=data[sapply(data,is.numeric)]#pick up the numeric columns
+  if(plotswitch == "on"){
+    if(!is.null(vector)){ # if vector is NULL
+      for(j in 1:length(vector)){ 
+        for(i in 1:ncol(num)){
+          mean <- mean(num[,i]) #caculate the mean of each numeric column
+          p1 <- ggplot(num,aes(x=num[i]),color = "blue")+geom_histogram(fill="blue",bins=vector[j])+ggtitle(paste(colnames(num[i]),vector[j],sep=" bins="))+xlab(colnames(num[i]))+geom_vline(xintercept = mean,col="red")#use ggplot to draw the histogram of counts and use 'geom_vline' to add a red line on the histogram
+          p2 <- ggplot(num,aes(x=num[i],..density..))+geom_histogram(fill="blue",bins=vector[j])+ggtitle(paste(colnames(num[i]),vector[j],sep=" bins="))+xlab(colnames(num[i]))+geom_vline(xintercept = mean,col="red")#use ggplot to draw the histogram of density and use 'geom_vline' to add a red line on the histogram 
+          grid.newpage()#create a new page
+          pushViewport(viewport(layout = grid.layout(2, 2, heights = unit(c(1, 8), "null"))))#use 'pushViewport' to add or remove viewports and to navigate amongst viewports in the tree.
+          title <- paste(colnames(num[i]),vector[j],sep=" bin=")
+          grid.text(title, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:2))
+          print(p1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+          print(p2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2)) 
+        }
+      }
+    }else{ #if vector isn't NULL
+      for(i in 1:ncol(num)){
+        mean <- mean(num[,i]) 
+          #caculate the mean of each numeric column
+        p1 <- ggplot(num,aes(x=num[i]),color="blue")+geom_histogram(fill="blue")+ggtitle(paste(colnames(num[i]),"default bins",sep="bins="))+xlab(colnames(num[i]))+geom_vline(xintercept = mean,col="red")#use ggplot to draw the histogram of count
+        p2 <- ggplot(num,aes(x=num[i],..density..))+geom_histogram(fill="blue")+ggtitle(paste(colnames(num[i]),"default bins",sep=" bins="))+xlab(colnames(num[i]))+geom_vline(xintercept = mean,col="red")#use ggplot to draw the density histogram
+        grid.newpage()#create a new page
+        pushViewport(viewport(layout = grid.layout(2, 2, heights = unit(c(1, 8), "null"))))
+        title <- paste(colnames(num[i]),"default bins",sep=" bins=")
+        grid.text(title, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:2))
+        print(p1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+        print(p2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))#print p1 and p2 two histograms
+      }
+    }
+    
+  }else{
+    if(plotswitch == "grid"){#  plotswitch can also = 'grid'
+      for(j in 1:length(vector)){
+        grid.newpage()#create a new page
+        his_count <-list() #create a new empty list for count  
+        his_density <- list() #create a new empty list for density
+        for(i in 1:ncol(num)){#go over all columns
+          his_count[[i]] <- ggplot(num, aes_string(colnames(num[i])), color = "blue")+geom_histogram(fill="blue", bins = vector[j])+labs(title= paste(vector[j], "bins")) #draw a histogram of the count and add it to the original list of count
+        }
+        multiplot(plotlist = his_count, cols = 2)#draw all histogram with same bins in one page
+        for(i in 1:ncol(num)){#go over all columns
+          his_density[[i]] <- ggplot(num, aes_string(colnames(num[i])), color="blue")+geom_histogram(aes(y= ..density..), fill="blue", bins = vector[j])+labs(title= paste(vector[j], "bins")) #draw a histogram of the density and add it to the original list of density
+        }
+        
+        multiplot(plotlist = his_density, cols = 2)#use multiplot to draw all histogram of density with same bins in one page
+      }
+    }
+  }
+}
+
+
+#4
+is.binary <- function(v) {
+#define a function which will judge whether the vector we input a binary vector
+#parameter: a vector
+#returns: TRUE if the vector is binary, FALSE else
+  x <- unique(v)#x contains all unique values in v
+  length(x) - sum(is.na(x)) == 2L#check to see if x only contains 2 distinct values
+}
+
+
+plot_gray <- function(data, plotswitch='off') {
+#define a function to plot a gray bar graph for every categorical and binary variable.
+#parameter: a dataframe we input
+#returns: a gray bar graph for every categorical and binary variable.
+  dfm_cb <- data[,sapply(data,is.factor)|sapply(data,is.logical)|sapply(data,is.binary)]
+  #select categorical and binary variable
+  if(plotswitch=="on"|plotswitch=="grid"){
+    for(i in 1:ncol(dfm_cb)){
+      p <- ggplot(dfm_cb,aes(x=dfm_cb[,i]),colour="gray")+geom_bar()+xlab(colnames(dfm_cb[i]))#plot gray bar for every categorial and binary variable
+      print(p)
+    }
+  }
+}
+
+explore<-function(data,plotswitch="off",threshold=0,vector = NULL){
+#define the mainfunction explore
+#parameter:dataframe we input
+#return:frequency table,summary statistic table, two new dataframes and graphs
+  plot_density_count(data,plotswitch,vector)#hhistograms of density and count
+  plot_gray (data, plotswitch)#gray bar graphs
+  out<-list(frequencytable(data),summarystatisticstable(data),RSquared(data),pearsincorr(data,th=threshold))
+  return(out)
+}
+explore(diamonds,plotswitch="on",threshold=0,vector = NULL)#test of the function'explore'
